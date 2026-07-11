@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./summary.css";
+import "./personal.css";
+import "./tax-controls.css";
 
 export const metadata: Metadata = {
   title: "Tax Studio — FY 2025–26 Income Tax Computation",
