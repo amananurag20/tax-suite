@@ -3,22 +3,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type IncomeKey = "salary" | "house" | "capital" | "business" | "presumptive" | "other";
-type NavKey = IncomeKey | "deductions" | "tdsTcs" | "advanceTax" | "selfAssessment";
+type NavKey = IncomeKey | "deductions" | "tdsTcs" | "advanceTax" | "selfAssessment" | "taxCalculation";
 
 const incomeHeads: { key: IncomeKey; icon: string; title: string; note: string; itr: string[] }[] = [
-  { key: "salary", icon: "▣", title: "Salary & pension", note: "Form 16, allowances and perquisites", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
-  { key: "house", icon: "⌂", title: "House property", note: "Rent, interest and municipal taxes", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
-  { key: "capital", icon: "↗", title: "Capital gains", note: "Equity, property and other assets", itr: ["ITR-2", "ITR-3"] },
-  { key: "business", icon: "◇", title: "Business income", note: "Profits from business or profession", itr: ["ITR-3"] },
-  { key: "presumptive", icon: "%", title: "Presumptive income", note: "Sections 44AD, 44ADA and 44AE", itr: ["ITR-3", "ITR-4"] },
-  { key: "other", icon: "＋", title: "Other sources", note: "Interest, dividend and family pension", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
+  { key: "salary", icon: "▣", title: "Salary & Pension", note: "Form 16, allowances and perquisites", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
+  { key: "house", icon: "⌂", title: "House Property", note: "Rent, interest and municipal taxes", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
+  { key: "capital", icon: "↗", title: "Capital Gains", note: "Equity, property and other assets", itr: ["ITR-2", "ITR-3"] },
+  { key: "business", icon: "◇", title: "Business Income", note: "Profits from business or profession", itr: ["ITR-3"] },
+  { key: "presumptive", icon: "%", title: "Presumptive Income", note: "Sections 44AD, 44ADA and 44AE", itr: ["ITR-3", "ITR-4"] },
+  { key: "other", icon: "＋", title: "Other Sources", note: "Interest, dividend and family pension", itr: ["ITR-1", "ITR-2", "ITR-3", "ITR-4"] },
 ];
 
 const utilityHeads = [
-  { key: "deductions" as NavKey, icon: "VI", title: "Chapter VI-A deductions", note: "Eligible deductions based on regime" },
+  { key: "deductions" as NavKey, icon: "VI", title: "Chapter VI-A Deductions", note: "Eligible deductions based on regime" },
   { key: "tdsTcs" as NavKey, icon: "TD", title: "TDS / TCS", note: "Tax deducted or collected at source" },
-  { key: "advanceTax" as NavKey, icon: "AT", title: "Advance tax", note: "Tax paid during the financial year" },
-  { key: "selfAssessment" as NavKey, icon: "SA", title: "Self-assessment tax", note: "Tax paid before filing the return" },
+  { key: "advanceTax" as NavKey, icon: "AT", title: "Advance Tax", note: "Tax paid during the financial year" },
+  { key: "selfAssessment" as NavKey, icon: "SA", title: "Self-Assessment Tax", note: "Tax paid before filing the return" },
+  { key: "taxCalculation" as NavKey, icon: "₹", title: "View Tax Calculation", note: "Detailed tax, rebate, cess and liability" },
 ];
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -41,7 +42,7 @@ function slabTax(income: number) {
     previous = limit;
     if (income <= limit) break;
   }
-  return income <= 1200000 ? 0 : tax;
+  return tax;
 }
 
 export default function Home() {
@@ -56,15 +57,16 @@ export default function Home() {
   const [agniveer, setAgniveer] = useState(0);
   const [advanceTax, setAdvanceTax] = useState(0);
   const [selfAssessmentTax, setSelfAssessmentTax] = useState(0);
-  const [interest234A] = useState(0);
-  const [interest234B] = useState(0);
-  const [interest234C] = useState(0);
-  const [fee234F] = useState(0);
+  const [interest234A, setInterest234A] = useState(0);
+  const [interest234B, setInterest234B] = useState(0);
+  const [interest234C, setInterest234C] = useState(0);
+  const [fee234F, setFee234F] = useState(0);
   const [personal, setPersonal] = useState({ name: "Arjun Kapoor", pan: "ABCDE1234F", aadhaar: "", dob: "1990-08-15", mobile: "", email: "", address: "" });
   const [saved, setSaved] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [statementDate, setStatementDate] = useState("2026-07-11");
   const [exportOpen, setExportOpen] = useState(false);
+  const [showNewConfirm, setShowNewConfirm] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const total = Object.values(values).reduce((a, b) => a + b, 0);
@@ -75,7 +77,9 @@ export default function Home() {
   const taxable = Math.max(0, total - standardDeduction - chapterVIA);
   const specialIncome = Math.min(values.capital, taxable);
   const normalIncome = Math.max(0, taxable - specialIncome);
-  const tax = useMemo(() => regime === "new" ? slabTax(taxable) : Math.max(0, taxable > 1000000 ? 112500 + (taxable - 1000000) * .3 : taxable > 500000 ? 12500 + (taxable - 500000) * .2 : Math.max(0, taxable - 250000) * .05), [regime, taxable]);
+  const grossNormalTax = useMemo(() => regime === "new" ? slabTax(taxable) : Math.max(0, taxable > 1000000 ? 112500 + (taxable - 1000000) * .3 : taxable > 500000 ? 12500 + (taxable - 500000) * .2 : Math.max(0, taxable - 250000) * .05), [regime, taxable]);
+  const rebate87A = regime === "new" && taxable <= 1200000 ? Math.min(grossNormalTax, 60000) : regime === "old" && taxable <= 500000 ? Math.min(grossNormalTax, 12500) : 0;
+  const tax = Math.max(0, grossNormalTax - rebate87A);
   const specialRateTax = 0;
   const grossTaxLiability = tax + specialRateTax;
   const surchargeRate = taxable > 50000000 ? (regime === "old" ? .37 : .25) : taxable > 20000000 ? .25 : taxable > 10000000 ? .15 : taxable > 5000000 ? .10 : 0;
@@ -87,11 +91,12 @@ export default function Home() {
   const netBalance = totalTaxLiability - tds - tcs - advanceTax - selfAssessmentTax;
   const current = incomeHeads.find((h) => h.key === active);
   const setValue = (key: IncomeKey, n: number) => setValues((v) => ({ ...v, [key]: n }));
+  const resetComputation = () => { setItr("ITR-1"); setRegime("new"); setActive("salary"); setValues({ salary:0, house:0, capital:0, business:0, presumptive:0, other:0 }); setDeductions(0); setTds(0); setTcs(0); setNpsEmployer(0); setAgniveer(0); setAdvanceTax(0); setSelfAssessmentTax(0); setInterest234A(0); setInterest234B(0); setInterest234C(0); setFee234F(0); setPersonal({ name:"", pan:"", aadhaar:"", dob:"", mobile:"", email:"", address:"" }); setStatementDate(""); setSaved(false); setShowReview(false); setExportOpen(false); setShowNewConfirm(false); };
   const formatDate = (date: string) => date ? date.split("-").reverse().join("-") : "—";
   useEffect(() => { const close = (event: MouseEvent) => { if (exportRef.current && !exportRef.current.contains(event.target as Node)) setExportOpen(false); }; document.addEventListener("mousedown", close); return () => document.removeEventListener("mousedown", close); }, []);
   const exportComputation = (format: "word" | "excel" | "pdf") => {
     setExportOpen(false); if (format === "pdf") { window.print(); return; }
-    const rows: (string | number)[][] = [["INCOME TAX COMPUTATION", ""], ["Financial Year", "2025-26"], ["Client Name", personal.name], ["PAN Number", personal.pan], ["Date of Birth", formatDate(personal.dob)], ["Mobile Number", personal.mobile], ["Email ID", personal.email], ["Tax Regime", regime === "new" ? "New Regime" : "Old Regime"], ["ITR Form", itr], ...(salaryIncome ? [["Income from Salary", salaryIncome] as (string | number)[]] : []), ...(values.house ? [["Income from House Property", values.house] as (string | number)[]] : []), ...(values.business + values.presumptive ? [["Business Income", values.business + values.presumptive] as (string | number)[]] : []), ...(values.capital ? [["Capital Gain", values.capital] as (string | number)[]] : []), ...(values.other ? [["Other Sources", values.other] as (string | number)[]] : []), ["Gross Total Income", grossTotalIncome], ...(regime === "old" || chapterVIA > 0 ? [["Deduction under Chapter VI-A", chapterVIA] as (string | number)[]] : []), ["Total Income", taxable], ["Normal Income", normalIncome], ["Special Income", specialIncome], ["Tax on Normal Income", tax], ["Tax on Special Income", specialRateTax], ["Gross Tax Liability", grossTaxLiability], ...(surcharge ? [["Surcharge", surcharge] as (string | number)[]] : []), ["Add: Health & Education Cess", cess], ...(interest234A ? [["Interest u/s 234A", interest234A] as (string | number)[]] : []), ...(interest234B ? [["Interest u/s 234B", interest234B] as (string | number)[]] : []), ...(interest234C ? [["Interest u/s 234C", interest234C] as (string | number)[]] : []), ...(fee234F ? [["Fee u/s 234F", fee234F] as (string | number)[]] : []), ["Total Tax Liability", totalTaxLiability], ["Less: TDS", tds], ...(tcs ? [["Less: TCS", tcs] as (string | number)[]] : []), ...(advanceTax ? [["Less: Advance Tax", advanceTax] as (string | number)[]] : []), ...(selfAssessmentTax ? [["Less: Self Assessment Tax Paid", selfAssessmentTax] as (string | number)[]] : []), ["Refund / Balance", Math.abs(netBalance)]];
+    const rows: (string | number)[][] = [["INCOME TAX COMPUTATION", ""], ["Financial Year", "2025-26"], ["Client Name", personal.name], ["PAN Number", personal.pan], ["Date of Birth", formatDate(personal.dob)], ["Mobile Number", personal.mobile], ["Email ID", personal.email], ["Tax Regime", regime === "new" ? "New Regime" : "Old Regime"], ["ITR Form", itr], ...(salaryIncome ? [["Income from Salary", salaryIncome] as (string | number)[]] : []), ...(values.house ? [["Income from House Property", values.house] as (string | number)[]] : []), ...(values.business + values.presumptive ? [["Business Income", values.business + values.presumptive] as (string | number)[]] : []), ...(values.capital ? [["Capital Gain", values.capital] as (string | number)[]] : []), ...(values.other ? [["Other Sources", values.other] as (string | number)[]] : []), ["Gross Total Income", grossTotalIncome], ...(regime === "old" || chapterVIA > 0 ? [["Deduction under Chapter VI-A", chapterVIA] as (string | number)[]] : []), ["Total Income", taxable], ["Normal Income", normalIncome], ["Special Income", specialIncome], ["Tax on Normal Income", grossNormalTax], ["Tax on Special Income", specialRateTax], ...(rebate87A ? [["Less: Rebate u/s 87A", rebate87A] as (string | number)[]] : []), ["Gross Tax Liability", grossTaxLiability], ...(surcharge ? [["Surcharge", surcharge] as (string | number)[]] : []), ["Add: Health & Education Cess", cess], ...(interest234A ? [["Interest u/s 234A", interest234A] as (string | number)[]] : []), ...(interest234B ? [["Interest u/s 234B", interest234B] as (string | number)[]] : []), ...(interest234C ? [["Interest u/s 234C", interest234C] as (string | number)[]] : []), ...(fee234F ? [["Fee u/s 234F", fee234F] as (string | number)[]] : []), ["Total Tax Liability", totalTaxLiability], ["Less: TDS", tds], ...(tcs ? [["Less: TCS", tcs] as (string | number)[]] : []), ...(advanceTax ? [["Less: Advance Tax", advanceTax] as (string | number)[]] : []), ...(selfAssessmentTax ? [["Less: Self Assessment Tax Paid", selfAssessmentTax] as (string | number)[]] : []), ["Refund / Balance", Math.abs(netBalance)]];
     const esc = (v: string | number) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const content = format === "excel" ? `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Tax Computation"><Table>${rows.map(r => `<Row>${r.map(v => `<Cell><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${esc(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet></Workbook>` : `<html><body><h1>INCOME TAX COMPUTATION</h1><table border="1" cellspacing="0" cellpadding="8">${rows.slice(1).map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table></body></html>`;
     const blob = new Blob([content], { type: format === "excel" ? "application/vnd.ms-excel" : "application/msword" });
@@ -103,13 +108,13 @@ export default function Home() {
       <header className="topbar">
         <div className="brand"><span className="brand-mark">T</span><div><strong>Tax Studio</strong><small>Income tax workspace</small></div></div>
         <div className="year-pill"><span>●</span> FY 2025–26 <b>AY 2026–27</b></div>
-        {showReview ? <button className="button back-button" onClick={() => { setShowReview(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>←</span> Back to Computation</button> : <div className="top-actions"><button className="icon-button" aria-label="Notifications">○</button><span className="avatar">AK</span><div className="profile"><strong>Arjun Kapoor</strong><small>Individual</small></div></div>}
+        {showReview ? <button className="button back-button" onClick={() => { setShowReview(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>←</span> Back to Computation</button> : <div className="top-actions"><button className="icon-button" aria-label="Notifications">○</button><span className="avatar">{personal.name ? personal.name.split(/\s+/).map(n => n[0]).slice(0,2).join("").toUpperCase() : "—"}</span><div className="profile"><strong>{personal.name || "New Client"}</strong><small>Individual</small></div></div>}
       </header>
 
       {!showReview && <>
       <section className="page-head">
         <div><p className="eyebrow">Income Tax Computation</p><h1>Let’s calculate your taxes.</h1><p>Add your income details and get a clear, real-time estimate.</p></div>
-        <div className="head-actions"><button className="button secondary" onClick={() => setSaved(true)}>{saved ? "✓ Draft saved" : "Save draft"}</button><button className="button primary" onClick={() => { setShowReview(true); setTimeout(() => document.getElementById("computation-review")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>View Computation <span>→</span></button></div>
+        <div className="head-toolbar"><button className="button secondary">Client Master</button><button className="button secondary" onClick={() => setShowNewConfirm(true)}>＋ New</button><button className="button secondary" onClick={() => setSaved(true)}>{saved ? "✓ Draft Saved" : "Save Draft"}</button><button className="button save-button" onClick={() => setSaved(true)}>Save</button><button className="button primary" onClick={() => { setShowReview(true); setTimeout(() => document.getElementById("computation-review")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>View Computation <span>→</span></button></div>
       </section>
 
       <section className="personal-card" aria-labelledby="personal-title">
@@ -134,10 +139,11 @@ export default function Home() {
         <label><span>ITR Form</span><select value={itr} onChange={(e) => setItr(e.target.value)}>{[1,2,3,4].map(n => <option key={n}>ITR-{n}</option>)}</select></label>
         <label><span>Tax Regime</span><div className="segmented"><button className={regime === "new" ? "active" : ""} onClick={() => setRegime("new")}>New regime <em>Default</em></button><button className={regime === "old" ? "active" : ""} onClick={() => setRegime("old")}>Old regime</button></div></label>
       </section>
+      <section className="setup-progress"><div><span>Computation Progress</span><strong>62% Complete</strong></div><div className="progress-track"><i /></div><p>Complete the remaining income, deduction and tax-paid details.</p></section>
 
       <div className="workspace">
         <aside className="income-nav">
-          <div className="nav-title"><span>Income Sources</span><b>{incomeHeads.filter(h => values[h.key] > 0).length}/6 added</b></div>
+          <div className="nav-title"><span>INCOME SOURCES</span><b>{incomeHeads.filter(h => values[h.key] > 0).length}/6 added</b></div>
           {incomeHeads.map((head) => {
             const unavailable = !head.itr.includes(itr);
             return <button key={head.key} disabled={unavailable} className={`${active === head.key ? "selected" : ""} ${unavailable ? "locked" : ""}`} onClick={() => setActive(head.key)}><span className="head-icon">{head.icon}</span><span><strong>{head.title}</strong><small>{unavailable ? `Not available in ${itr}` : head.note}</small></span>{values[head.key] > 0 && !unavailable ? <em>✓</em> : <i>›</i>}</button>
@@ -145,8 +151,9 @@ export default function Home() {
           <div className="nav-title nav-group"><span>Deductions</span><b>{chapterVIA > 0 ? "1 added" : "0 added"}</b></div>
           {utilityHeads.filter(h => h.key === "deductions").map((head) => <button key={head.key} className={active === head.key ? "selected" : ""} onClick={() => setActive(head.key)}><span className="head-icon text-icon">{head.icon}</span><span><strong>Chapter VI-A deductions</strong><small>{head.note}</small></span>{chapterVIA > 0 ? <em>✓</em> : <i>›</i>}</button>)}
           <div className="nav-title nav-group"><span>Tax Paid</span><b>{money.format(tds + tcs + advanceTax + selfAssessmentTax)}</b></div>
-          {utilityHeads.filter(h => h.key !== "deductions").map((head) => { const amount = head.key === "tdsTcs" ? tds + tcs : head.key === "advanceTax" ? advanceTax : selfAssessmentTax; return <button key={head.key} className={active === head.key ? "selected" : ""} onClick={() => setActive(head.key)}><span className="head-icon text-icon">{head.icon}</span><span><strong>{head.title}</strong><small>{head.note}</small></span>{amount > 0 ? <em>✓</em> : <i>›</i>}</button>; })}
-          <div className="completion"><div><strong>COMPLETION</strong><b>62%</b></div><span><i /></span><p>Complete each head to finish computation</p></div>
+          {utilityHeads.filter(h => h.key !== "deductions" && h.key !== "taxCalculation").map((head) => { const amount = head.key === "tdsTcs" ? tds + tcs : head.key === "advanceTax" ? advanceTax : selfAssessmentTax; return <button key={head.key} className={active === head.key ? "selected" : ""} onClick={() => setActive(head.key)}><span className="head-icon text-icon">{head.icon}</span><span><strong>{head.title}</strong><small>{head.note}</small></span>{amount > 0 ? <em>✓</em> : <i>›</i>}</button>; })}
+          <div className="nav-title nav-group"><span>Tax Calculation</span></div>
+          <button className={active === "taxCalculation" ? "selected" : ""} onClick={() => setActive("taxCalculation")}><span className="head-icon text-icon">₹</span><span><strong>View Tax Calculation</strong><small>Detailed tax, rebate, cess and liability</small></span><i>›</i></button>
         </aside>
 
         {current ? <section className="entry-card">
@@ -169,11 +176,12 @@ export default function Home() {
           {active === "tdsTcs" && <div className="form-grid"><Field label="Tax Deducted at Source (TDS)" value={tds} onChange={setTds} /><Field label="Tax Collected at Source (TCS)" value={tcs} onChange={setTcs} /></div>}
           {active === "advanceTax" && <div className="form-grid"><Field label="Advance tax paid" value={advanceTax} onChange={setAdvanceTax} hint="Enter total challan amount paid during FY 2025–26" /></div>}
           {active === "selfAssessment" && <div className="form-grid"><Field label="Self-assessment tax paid" value={selfAssessmentTax} onChange={setSelfAssessmentTax} hint="Enter tax paid before filing the return" /></div>}
-          <div className="entry-total"><span>Total entered</span><strong>{money.format(active === "deductions" ? chapterVIA : active === "tdsTcs" ? tds + tcs : active === "advanceTax" ? advanceTax : selfAssessmentTax)}</strong></div>
+          {active === "taxCalculation" && <div className="tax-detail-panel"><div><span>Tax on Normal Income</span><b>{money.format(grossNormalTax)}</b></div><div><span>Tax on Special Income</span><b>{money.format(specialRateTax)}</b></div>{rebate87A > 0 && <div className="less"><span>Less: Rebate u/s 87A</span><b>− {money.format(rebate87A)}</b></div>}<div><span>Gross Tax Liability</span><b>{money.format(grossTaxLiability)}</b></div>{surcharge > 0 && <div><span>Surcharge</span><b>{money.format(surcharge)}</b></div>}<div><span>Health &amp; Education Cess</span><b>{money.format(cess)}</b></div><div className="total"><span>Total Tax Liability</span><b>{money.format(totalTaxLiability)}</b></div></div>}
+          <div className="entry-total"><span>{active === "taxCalculation" ? "Total Tax Liability" : "Total Entered"}</span><strong>{money.format(active === "deductions" ? chapterVIA : active === "tdsTcs" ? tds + tcs : active === "advanceTax" ? advanceTax : active === "selfAssessment" ? selfAssessmentTax : totalTaxLiability)}</strong></div>
         </section>}
 
         <aside className="summary-card">
-          <div className="summary-head"><div><p>Live Summary</p><h2>Your tax estimate</h2></div><span>● Updated now</span></div>
+          <div className="summary-head"><div><p>Live Summary</p><h2>YOUR TAX ESTIMATE</h2></div><span>● Updated now</span></div>
           <div className="income-total"><span>GROSS TOTAL INCOME</span><strong>{money.format(total)}</strong><small>Across {Object.values(values).filter(Boolean).length} income sources</small></div>
           <div className="summary-lines"><div><span>Standard deduction</span><b>− {money.format(standardDeduction)}</b></div><div><span>Chapter VI-A deductions</span><b>− {money.format(chapterVIA)}</b></div><div className="taxable"><span>Taxable income</span><b>{money.format(taxable)}</b></div><div><span>Income tax</span><b>{money.format(tax)}</b></div><div><span>Health & education cess</span><b>{money.format(cess)}</b></div></div>
           <label className="tds-row"><span>Taxes already paid (TDS/TCS)</span><div className="mini-input"><b>₹</b><input aria-label="Taxes already paid" inputMode="numeric" value={tds || ""} onChange={(e) => setTds(Number(e.target.value.replace(/\D/g, "")))} /></div></label>
@@ -216,8 +224,9 @@ export default function Home() {
           <div className="income-classification"><div><span>NORMAL INCOME</span><strong>{money.format(normalIncome)}</strong></div><div><span>SPECIAL INCOME</span><strong>{money.format(specialIncome)}</strong></div></div>
 
           <div className="computation-section-title"><span>02</span> Tax Calculation</div>
-          <div className="computation-row"><span>Tax on Normal Income</span><b>{money.format(tax)}</b></div>
+          <div className="computation-row"><span>Tax on Normal Income</span><b>{money.format(grossNormalTax)}</b></div>
           <div className="computation-row"><span>Tax on Special Income</span><b>{money.format(specialRateTax)}</b></div>
+          {rebate87A > 0 && <div className="computation-row less rebate-row"><span>Less: Rebate u/s 87A</span><b>− {money.format(rebate87A)}</b></div>}
           <div className="computation-row major"><span>Gross Tax Liability</span><b>{money.format(grossTaxLiability)}</b></div>
           {surcharge > 0 && <div className="computation-row"><span>Surcharge</span><b>{money.format(surcharge)}</b></div>}
           <div className="computation-row"><span>Add: Health &amp; Education Cess</span><b>{money.format(cess)}</b></div>
@@ -240,6 +249,7 @@ export default function Home() {
           <div className="export-menu" ref={exportRef}><button className="button primary export-trigger" onClick={() => setExportOpen(v => !v)} aria-expanded={exportOpen}>Export <span>⌄</span></button>{exportOpen && <div><button onClick={() => exportComputation("word")}><b>W</b><span>Word<small>.doc document</small></span></button><button onClick={() => exportComputation("excel")}><b>X</b><span>Excel<small>.xls workbook</small></span></button><button onClick={() => exportComputation("pdf")}><b>P</b><span>PDF<small>Print-ready PDF</small></span></button></div>}</div>
         </div>
       </section>}
+      {showNewConfirm && <div className="confirm-overlay" role="presentation" onMouseDown={() => setShowNewConfirm(false)}><section className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="new-title" onMouseDown={(e) => e.stopPropagation()}><div className="confirm-icon">＋</div><h2 id="new-title">Create New Computation?</h2><p>Are you sure you want to create a new computation? All unsaved information will be reset to NIL.</p><div><button className="button secondary" onClick={() => setShowNewConfirm(false)}>No</button><button className="button primary" onClick={resetComputation}>Yes, Create New</button></div></section></div>}
     </main>
   );
 }

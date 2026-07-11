@@ -4,6 +4,8 @@ import "./summary.css";
 import "./personal.css";
 import "./tax-controls.css";
 import "./classification.css";
+import "./toolbar.css";
+import "./dialogs.css";
 
 export const metadata: Metadata = {
   title: "Tax Studio — FY 2025–26 Income Tax Computation",
