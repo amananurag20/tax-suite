@@ -1,0 +1,15 @@
+.income-summary { max-width:calc(1440px - 7vw);margin:0 auto 44px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 12px #183b330c;overflow:hidden; }
+.income-summary-head { padding:20px 22px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--line); }
+.income-summary-head p { color:var(--orange);font-size:9px;letter-spacing:1.4px;font-weight:800;margin:0 0 7px; }
+.income-summary-head h2 { font:700 23px Georgia,serif;margin:0 0 5px; }.income-summary-head small { color:var(--muted);font-size:10px; }
+.summary-status { color:var(--green);background:var(--mint);border-radius:99px;padding:6px 10px;font-size:9px;font-weight:800; }
+.income-summary-table { padding:0 22px; }.income-summary-row { min-height:54px;display:grid;grid-template-columns:1fr 180px;align-items:center;border-bottom:1px solid #edf1ef;font-size:11px; }
+.income-summary-row>span:first-child { display:flex;align-items:center;gap:10px; }.income-summary-row i { width:28px;height:28px;display:grid;place-items:center;border-radius:7px;background:var(--mint);color:var(--green);font-style:normal; }
+.income-summary-row span span strong,.income-summary-row span span small { display:block; }.income-summary-row span span small { color:var(--muted);font-size:8px;margin-top:3px;font-weight:400; }.income-summary-row>b { text-align:right;font-size:12px; }
+.income-summary-row.heading { min-height:35px;color:var(--muted);font-size:8px;letter-spacing:1px;text-transform:uppercase;font-weight:800; }.income-summary-row.heading span:last-child { text-align:right; }
+.income-summary-row.gross { background:#f4f8f6;margin:0 -22px;padding:0 22px;font-weight:800;border-top:1px solid #d6e5df; }.income-summary-row.gross b { font:700 17px Georgia,serif;color:var(--green); }
+.income-summary-row.deduction { min-height:42px;color:var(--muted); }.income-summary-row.deduction b { color:var(--ink); }
+.income-summary-row.net { background:var(--green);color:#fff;margin:0 -22px;padding:0 22px;border:0;min-height:66px; }.income-summary-row.net small { color:#c7ddd6; }.income-summary-row.net b { font:700 22px Georgia,serif; }.empty-amount { color:#9aa8a4; }
+.income-summary-footer { padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:20px; }.income-summary-footer p { color:var(--muted);font-size:9px;margin:0; }.income-summary-footer p span { display:inline-grid;place-items:center;width:17px;height:17px;border:1px solid var(--line);border-radius:50%;margin-right:6px;color:var(--green);font-weight:800; }
+@media (max-width:720px) { .income-summary { margin:0 16px 30px; }.income-summary-table { padding:0 16px; }.income-summary-row { grid-template-columns:1fr 110px; }.income-summary-row.gross,.income-summary-row.net { margin:0 -16px;padding:0 16px; }.income-summary-footer { align-items:stretch;flex-direction:column; }.income-summary-footer .button { width:100%; }.income-summary-head { padding:18px 16px; } }
+@media print { .income-summary-footer { display:none!important; }.income-summary { display:block;margin:0;max-width:none;border:0;box-shadow:none; } }

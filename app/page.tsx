@@ -108,6 +108,30 @@ export default function Home() {
           <p className="disclaimer">Indicative estimate for planning. Final liability may vary based on special-rate income, surcharge, marginal relief and filing rules.</p>
         </aside>
       </div>
+
+      <section className="income-summary" aria-labelledby="income-summary-title">
+        <div className="income-summary-head">
+          <div><p>COMPUTATION OVERVIEW</p><h2 id="income-summary-title">Summary of Income</h2><small>FY 2025–26 · {itr} · {regime === "new" ? "New tax regime" : "Old tax regime"}</small></div>
+          <span className="summary-status">✓ Auto-updated</span>
+        </div>
+        <div className="income-summary-table">
+          <div className="income-summary-row heading"><span>Particulars</span><span>Amount</span></div>
+          {incomeHeads.map((head) => (
+            <div className="income-summary-row" key={head.key}>
+              <span><i>{head.icon}</i><span><strong>{head.title}</strong><small>{values[head.key] ? "Income details added" : "No income entered"}</small></span></span>
+              <b className={values[head.key] ? "" : "empty-amount"}>{money.format(values[head.key])}</b>
+            </div>
+          ))}
+          <div className="income-summary-row gross"><span>Gross Total Income</span><b>{money.format(total)}</b></div>
+          <div className="income-summary-row deduction"><span>Less: Standard deduction</span><b>− {money.format(standardDeduction)}</b></div>
+          <div className="income-summary-row deduction"><span>Less: Chapter VI-A deductions</span><b>− {money.format(regime === "old" ? deductions : 0)}</b></div>
+          <div className="income-summary-row net"><span><span><strong>Net Total Income</strong><small>Income chargeable to tax</small></span></span><b>{money.format(taxable)}</b></div>
+        </div>
+        <div className="income-summary-footer">
+          <p><span>i</span>This summary updates automatically whenever you change an income amount.</p>
+          <button className="button primary" onClick={() => window.print()}>Print computation <span>→</span></button>
+        </div>
+      </section>
     </main>
   );
 }
