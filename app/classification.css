@@ -1,0 +1,11 @@
+.income-classification span {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.15px;
+}
+
+.income-classification strong {
+  margin-top: 6px;
+  font-size: 18px;
+}
