@@ -7,3 +7,5 @@
 @media (max-width:1050px) { .page-head { align-items:flex-start; }.head-toolbar { max-width:520px; }.setup-progress { grid-template-columns:190px 1fr; }.setup-progress p { grid-column:1/-1; } }
 @media (max-width:720px) { .head-toolbar { justify-content:stretch;margin-top:18px; }.head-toolbar .button { flex:1 1 calc(50% - 8px); }.head-toolbar .button:last-child { flex-basis:100%; }.setup-progress { margin:0 16px 16px;grid-template-columns:1fr;gap:9px; } }
 @media print { .setup-progress,.head-toolbar { display:none!important; } }
+.json-import-input { display:none; }
+.utility-save-footer { margin-top:16px; }.utility-save-footer>span { color:var(--muted);font-size:9px; }
