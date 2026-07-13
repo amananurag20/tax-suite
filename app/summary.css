@@ -159,3 +159,136 @@
   .working-total { background:#f2f2f2!important;print-color-adjust:exact;-webkit-print-color-adjust:exact; }.working-note { background:#fafafa!important;print-color-adjust:exact;-webkit-print-color-adjust:exact; }
   .working-total.final { background:#0f5b4c!important;color:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact; }
 }
+
+/* Final row rhythm and readable subheading scale for screen and PDF. */
+.income-summary-table.statement-table .computation-row {
+  min-height:38px;
+  font-size:13px;
+  line-height:1.28;
+}
+.income-summary-table.statement-table .computation-row b {
+  font-size:13px;
+  line-height:1.28;
+}
+.income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) {
+  padding-top:4px;
+  padding-bottom:4px;
+}
+.income-head-group .source-subrow {
+  min-height:36px;
+  font-size:13px;
+  line-height:1.3;
+}
+.income-head-group .source-subrow>span {
+  font-size:13px;
+}
+.income-head-group .source-subrow b {
+  font-size:13px;
+}
+.income-summary-table.statement-table .computation-row.major {
+  min-height:38px;
+}
+.income-summary-table.statement-table .computation-row.major span,
+.income-summary-table.statement-table .computation-row.subtotal span {
+  font-size:14px;
+}
+
+@media print {
+  .income-summary-table.statement-table .computation-row {
+    min-height:25pt!important;
+    font-size:10pt!important;
+    line-height:1.22!important;
+    grid-template-columns:minmax(0,1fr) 165pt!important;
+    border-color:#bbb!important;
+  }
+  .income-summary-table.statement-table .computation-row b {
+    font-size:10pt!important;
+    line-height:1.22!important;
+  }
+  .income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) {
+    padding-top:2.5pt!important;
+    padding-bottom:2.5pt!important;
+  }
+  .income-head-group .source-subrow {
+    min-height:24pt!important;
+    font-size:10pt!important;
+    line-height:1.25!important;
+  }
+  .income-head-group .source-subrow>span {
+    font-size:10pt!important;
+  }
+  .income-head-group .source-subrow b {
+    font-size:10pt!important;
+    transform:translateX(-92pt)!important;
+  }
+  .income-summary-table.statement-table .computation-row.major,
+  .income-summary-table.statement-table .computation-row.subtotal {
+    min-height:27pt!important;
+  }
+  .income-summary-table.statement-table .computation-row.major span,
+  .income-summary-table.statement-table .computation-row.subtotal span {
+    font-size:10.5pt!important;
+  }
+  .income-summary-table.statement-table .computation-row.major b,
+  .income-summary-table.statement-table .computation-row.subtotal b {
+    font-size:12.6pt!important;
+  }
+}
+
+/* Larger section labels only: 01 Income Details, 02 Tax Calculation and Tax Working. */
+.income-summary .computation-section-title {
+  font-size:14px;
+  letter-spacing:.7px;
+}
+.income-summary .computation-section-title span {
+  width:26px;
+  height:26px;
+  font-size:10px;
+}
+.income-head-group .source-subrow>span,
+.income-head-group .source-subrow b {
+  font-size:14px;
+}
+.income-summary-table.statement-table .computation-row.tax-milestone span {
+  font-size:13px;
+}
+.income-summary-table.statement-table .computation-row.tax-milestone b {
+  font-size:15px!important;
+}
+
+@media print {
+  .income-summary .computation-section-title {
+    font-size:11pt!important;
+    letter-spacing:.45pt!important;
+  }
+  .income-summary .computation-section-title span {
+    width:18pt!important;
+    height:18pt!important;
+    font-size:8pt!important;
+  }
+  .income-head-group .source-subrow>span,
+  .income-head-group .source-subrow b {
+    font-size:10.5pt!important;
+  }
+  .income-summary-table.statement-table .computation-row.tax-milestone span {
+    font-size:9.8pt!important;
+  }
+  .income-summary-table.statement-table .computation-row.tax-milestone b {
+    font-size:11.2pt!important;
+  }
+}
+
+/* Amount emphasis requested for detail subrows only. */
+.income-head-group .source-subrow b,
+.income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) b {
+  font-size:15px!important;
+  font-weight:400!important;
+}
+
+@media print {
+  .income-head-group .source-subrow b,
+  .income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) b {
+    font-size:11pt!important;
+    font-weight:400!important;
+  }
+}
