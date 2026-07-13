@@ -237,13 +237,15 @@
 
 /* Larger section labels only: 01 Income Details, 02 Tax Calculation and Tax Working. */
 .income-summary .computation-section-title {
-  font-size:14px;
-  letter-spacing:.7px;
+  padding-top:8px;
+  padding-bottom:8px;
+  font-size:12px;
+  letter-spacing:.55px;
 }
 .income-summary .computation-section-title span {
-  width:26px;
-  height:26px;
-  font-size:10px;
+  width:22px;
+  height:22px;
+  font-size:8px;
 }
 .income-head-group .source-subrow>span,
 .income-head-group .source-subrow b {
@@ -258,13 +260,15 @@
 
 @media print {
   .income-summary .computation-section-title {
-    font-size:11pt!important;
-    letter-spacing:.45pt!important;
+    padding-top:6pt!important;
+    padding-bottom:6pt!important;
+    font-size:9.5pt!important;
+    letter-spacing:.35pt!important;
   }
   .income-summary .computation-section-title span {
-    width:18pt!important;
-    height:18pt!important;
-    font-size:8pt!important;
+    width:15pt!important;
+    height:15pt!important;
+    font-size:7pt!important;
   }
   .income-head-group .source-subrow>span,
   .income-head-group .source-subrow b {
@@ -279,16 +283,26 @@
 }
 
 /* Amount emphasis requested for detail subrows only. */
+.income-head-group .source-subrow>span,
+.income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main)>span {
+  font-size:13.5px!important;
+  font-weight:400!important;
+}
 .income-head-group .source-subrow b,
 .income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) b {
-  font-size:15px!important;
+  font-size:13.5px!important;
   font-weight:400!important;
 }
 
 @media print {
+  .income-head-group .source-subrow>span,
+  .income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main)>span {
+    font-size:10pt!important;
+    font-weight:400!important;
+  }
   .income-head-group .source-subrow b,
   .income-summary-table.statement-table .computation-row:not(.major):not(.subtotal):not(.source-main) b {
-    font-size:11pt!important;
+    font-size:10pt!important;
     font-weight:400!important;
   }
 }
