@@ -306,3 +306,304 @@
     font-weight:400!important;
   }
 }
+
+/* PDF safety: keep the statement fully inside the printable A4 area. */
+@media print {
+  @page {
+    size:A4 portrait;
+    margin:36pt 32pt 42pt;
+  }
+
+  html,
+  body,
+  .app-shell,
+  .workspace,
+  .summary-card,
+  .income-summary {
+    width:auto!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    overflow:visible!important;
+  }
+
+  .app-shell,
+  .workspace,
+  .summary-card {
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+
+  .income-summary {
+    box-sizing:border-box!important;
+    padding:0!important;
+  }
+
+  .statement-head,
+  .statement-subheading,
+  .client-statement-grid,
+  .income-summary-table,
+  .tax-working,
+  .statement-signoff {
+    box-sizing:border-box!important;
+    max-width:100%!important;
+  }
+
+  .income-summary-table.statement-table .computation-row {
+    grid-template-columns:minmax(0,1fr) 154pt!important;
+    column-gap:8pt!important;
+    padding-left:4pt!important;
+    padding-right:4pt!important;
+  }
+
+  .income-head-group .source-main,
+  .income-summary-table.statement-table .computation-row.major,
+  .income-summary-table.statement-table .computation-row.subtotal {
+    margin-left:0!important;
+    margin-right:0!important;
+    padding-left:8pt!important;
+    padding-right:8pt!important;
+  }
+
+  .income-head-group .source-subrow b {
+    transform:translateX(-78pt)!important;
+  }
+
+  .income-classification>div {
+    grid-template-columns:minmax(0,1fr) 148pt!important;
+  }
+
+  .computation-result {
+    grid-template-columns:minmax(0,1fr) 148pt!important;
+  }
+
+  .working-card-head,
+  .working-total,
+  .working-note,
+  .working-line,
+  .formula-line {
+    grid-template-columns:minmax(0,1fr) 120pt!important;
+  }
+
+  .working-grid {
+    grid-template-columns:minmax(142pt,1.45fr) 74pt 38pt 74pt!important;
+    column-gap:6pt!important;
+  }
+
+  .special-working-grid {
+    grid-template-columns:minmax(164pt,1.55fr) 74pt 38pt 74pt!important;
+  }
+
+  .interest-c-grid {
+    grid-template-columns:minmax(126pt,1.2fr) 98pt 70pt 70pt!important;
+  }
+}
+
+/* Keep every income main head visually identical to Capital Gains. */
+.income-summary .income-head-group .source-main {
+  min-height:34px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  background:#f6f8f7!important;
+  border-top:1px solid #d6e5df!important;
+  border-bottom:1px solid #d6e5df!important;
+  font-weight:800!important;
+}
+
+.income-summary .income-head-group .source-main span,
+.income-summary .income-head-group .source-main b {
+  font-size:13px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+
+.income-summary .income-head-group .source-main b {
+  color:var(--ink)!important;
+  font-family:inherit!important;
+  text-align:right!important;
+}
+
+@media print {
+  .income-summary .income-head-group .source-main {
+    min-height:24pt!important;
+    padding-left:8pt!important;
+    padding-right:8pt!important;
+    background:#e8efec!important;
+    border-top:1pt solid #b7c7c1!important;
+    border-bottom:1pt solid #b7c7c1!important;
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+
+  .income-summary .income-head-group .source-main span,
+  .income-summary .income-head-group .source-main b {
+    font-size:9.8pt!important;
+    line-height:1.2!important;
+    font-weight:800!important;
+  }
+}
+
+/* Requested amount typography alignment. */
+.income-summary-table.statement-table > .computation-row.income-total-row b,
+.income-classification strong {
+  font-family:inherit!important;
+  font-size:13px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+
+.income-summary-table.statement-table .computation-row.tax-milestone b,
+.income-summary-table.statement-table .computation-row.major:not(.income-total-row):not(.source-main) b {
+  font-family:inherit!important;
+  font-size:13.5px!important;
+  line-height:1.28!important;
+  font-weight:800!important;
+}
+
+@media print {
+  .income-summary-table.statement-table > .computation-row.income-total-row b,
+  .income-classification strong {
+    font-family:inherit!important;
+    font-size:9.8pt!important;
+    line-height:1.2!important;
+    font-weight:800!important;
+  }
+
+  .income-summary-table.statement-table .computation-row.tax-milestone b,
+  .income-summary-table.statement-table .computation-row.major:not(.income-total-row):not(.source-main) b {
+    font-family:inherit!important;
+    font-size:10pt!important;
+    line-height:1.22!important;
+    font-weight:800!important;
+  }
+}
+
+/* Compact final tax result and match its amount with Tax Before Interest. */
+.income-summary .computation-result {
+  min-height:42px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+
+.income-summary .computation-result span {
+  font-size:13px!important;
+  line-height:1.2!important;
+}
+
+.income-summary .computation-result b {
+  font-family:inherit!important;
+  font-size:13px!important;
+  line-height:1.28!important;
+  font-weight:800!important;
+}
+
+@media print {
+  .income-summary .computation-result {
+    min-height:28pt!important;
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+
+  .income-summary .computation-result span {
+    font-size:9.8pt!important;
+    line-height:1.2!important;
+  }
+
+.income-summary .computation-result b {
+    font-family:inherit!important;
+    font-size:9.8pt!important;
+    line-height:1.22!important;
+    font-weight:800!important;
+  }
+}
+
+/* Summary date of filing: improve readability */
+.statement-signoff label > span {
+  font-size: 10px!important;
+  line-height: 1.25!important;
+  letter-spacing: 1px!important;
+}
+.statement-signoff input {
+  font-size: 14px!important;
+  line-height: 1.3!important;
+  font-weight: 800!important;
+}
+@media print {
+  .statement-signoff label > span {
+    font-size: 8.5pt!important;
+    line-height: 1.25!important;
+  }
+  .statement-signoff input {
+    font-size: 10.5pt!important;
+    line-height: 1.3!important;
+  }
+}
+
+/* Match Tax Working amount typography with Tax Calculation subheading amounts. */
+.tax-working .working-card-head>b,
+.tax-working .working-grid>b,
+.tax-working .working-total b,
+.tax-working .working-note b,
+.tax-working .working-line b,
+.tax-working .formula-line b {
+  font-family:inherit!important;
+  font-size:13.5px!important;
+  line-height:1.28!important;
+  font-weight:400!important;
+}
+
+@media print {
+  .tax-working .working-card-head>b,
+  .tax-working .working-grid>b,
+  .tax-working .working-total b,
+  .tax-working .working-note b,
+  .tax-working .working-line b,
+  .tax-working .formula-line b {
+    font-family:inherit!important;
+    font-size:10pt!important;
+    line-height:1.22!important;
+    font-weight:400!important;
+  }
+}
+
+.tax-working .working-card-head>b,
+.tax-working .working-total b {
+  font-weight:800!important;
+}
+
+.tax-working .working-note span,
+.tax-working .working-note b {
+  font-weight:800!important;
+}
+
+@media print {
+  .tax-working .working-card-head>b,
+  .tax-working .working-total b {
+    font-weight:800!important;
+  }
+
+  .tax-working .working-note span,
+  .tax-working .working-note b {
+    font-weight:800!important;
+  }
+}
+
+/* Make Particulars / Amount table header easier to read. */
+.income-summary-table.statement-table .income-summary-row.heading {
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+
+.income-summary-table.statement-table .income-summary-row.heading span {
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+
+@media print {
+  .income-summary-table.statement-table .income-summary-row.heading,
+  .income-summary-table.statement-table .income-summary-row.heading span {
+    font-size:9.5pt!important;
+    line-height:1.25!important;
+  }
+}

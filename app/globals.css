@@ -24,3 +24,110 @@ button { cursor:pointer; }
 @media print { .app-shell { padding-top:0; }.topbar,.head-actions,.setup-card,.income-nav,.entry-footer { display:none!important; }.workspace { display:block;margin:0;max-width:none; }.summary-card { border:0;box-shadow:none; }.page-head { padding:20px 0; } }
 .setup-card { grid-template-columns:minmax(230px,1fr) 150px 245px 360px;gap:18px; }
 @media (max-width:1050px) { .setup-card { grid-template-columns:1fr 1fr; }.setup-copy { grid-column:1/-1; } }
+
+/* Main sheet total rows: match label size with amount */
+.entry-total { align-items: center; font-size: 17px; }
+.entry-total span { font-size: 17px; line-height: 1.2; font-weight: 700; }
+.entry-total strong { font-size: 17px; }
+
+/* Live summary rows: improve readability for tax estimate details */
+.summary-lines > div {
+  font-size: 13px;
+  line-height: 1.35;
+}
+.summary-lines b {
+  font-size: 13px;
+}
+.summary-lines .taxable {
+  font-size: 14px;
+}
+.summary-lines .taxable b {
+  font-size: 14px;
+}
+
+/* Live summary payable/refundable state */
+.payable.tax-payable,
+.payable.tax-refundable {
+  border-top: 0;
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 14px 16px;
+}
+.payable.tax-payable strong,
+.payable.tax-refundable strong {
+  font-size: 25px;
+}
+.payable.tax-payable {
+  background: #884527;
+  color: #fff;
+}
+.payable.tax-payable strong {
+  color: #fff;
+}
+.payable.tax-payable span,
+.payable.tax-payable small {
+  color: #f5d8c8;
+}
+.payable.tax-refundable {
+  background: var(--green);
+  color: #fff;
+}
+.payable.tax-refundable strong {
+  color: #fff;
+}
+.payable.tax-refundable span,
+.payable.tax-refundable small {
+  color: #c7ddd6;
+}
+
+/* Live summary card captions: make small text readable on dark panels */
+.income-total span,
+.payable.tax-payable span,
+.payable.tax-refundable span {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  line-height: 1.25;
+  opacity: 1;
+}
+.income-total small,
+.payable.tax-payable small,
+.payable.tax-refundable small {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  opacity: 1;
+}
+
+/* Left navigation: slightly larger typography */
+.income-nav .nav-title {
+  font-size: 10px;
+}
+.income-nav .nav-title span {
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+}
+.income-nav .nav-title.nav-group span {
+  font-size: 10px;
+}
+.income-nav .nav-title b {
+  font-size: 10px;
+}
+.income-nav button strong {
+  font-size: 12px;
+}
+.income-nav button small {
+  font-size: 10px;
+  line-height: 1.3;
+}
+.income-nav button em,
+.income-nav button i {
+  font-size: 10px;
+}
+.income-nav .head-icon {
+  font-size: 13px;
+}
+
