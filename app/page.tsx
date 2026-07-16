@@ -46,6 +46,31 @@ function slabTax(income: number) {
   return tax;
 }
 
+function ageOn(date: string, asOf = new Date("2026-03-31T00:00:00")) {
+  if (!date) return 0;
+  const dob = new Date(`${date}T00:00:00`);
+  let age = asOf.getFullYear() - dob.getFullYear();
+  const birthdayThisYear = new Date(asOf.getFullYear(), dob.getMonth(), dob.getDate());
+  if (asOf < birthdayThisYear) age -= 1;
+  return age;
+}
+
+function basicExemptionLimit(regime: "new" | "old", dob: string) {
+  if (regime === "new") return 400000;
+  const age = ageOn(dob);
+  if (age >= 80) return 500000;
+  if (age >= 60) return 300000;
+  return 250000;
+}
+
+function normalTaxFor(regime: "new" | "old", income: number, basicExemption: number) {
+  if (regime === "new") return slabTax(income);
+  const fivePercentBand = Math.max(0, Math.min(income, 500000) - basicExemption) * .05;
+  const twentyPercentBand = Math.max(0, Math.min(income, 1000000) - 500000) * .20;
+  const thirtyPercentBand = Math.max(0, income - 1000000) * .30;
+  return fivePercentBand + twentyPercentBand + thirtyPercentBand;
+}
+
 export default function Home() {
   const [itr, setItr] = useState("ITR-1");
   const [regime, setRegime] = useState<"new" | "old">("new");
@@ -157,13 +182,19 @@ export default function Home() {
   const fallbackSpecialIncome = ["111A", "112A", "112"].includes(committedTaxData.capitalSection) ? Math.max(0, committedValues.capital) : 0;
   const specialIncome = Math.max(0, Math.min(detailedSpecialIncome || fallbackSpecialIncome, taxable));
   const normalIncome = Math.max(0, taxable - specialIncome);
-  const grossNormalTax = useMemo(() => regime === "new" ? slabTax(normalIncome) : Math.max(0, normalIncome > 1000000 ? 112500 + (normalIncome - 1000000) * .3 : normalIncome > 500000 ? 12500 + (normalIncome - 500000) * .2 : Math.max(0, normalIncome - 250000) * .05), [regime, normalIncome]);
+  const basicExemption = basicExemptionLimit(regime, personal.dob);
+  const specialBasicExemptionAdjustment = Math.min(specialIncome, Math.max(0, basicExemption - normalIncome));
+  const grossNormalTax = useMemo(() => normalTaxFor(regime, normalIncome, basicExemption), [regime, normalIncome, basicExemption]);
   const rebate87A = regime === "new" && taxable <= 1200000 ? Math.min(grossNormalTax, 60000) : regime === "old" && taxable <= 500000 ? Math.min(grossNormalTax, 12500) : 0;
   const tax = Math.max(0, grossNormalTax - rebate87A);
   const fallbackSpecialRate = committedTaxData.capitalSection === "111A" ? .20 : committedTaxData.capitalSection === "112A" || committedTaxData.capitalSection === "112" ? .125 : 0;
   const specialRate = fallbackSpecialRate;
-  const fallbackSpecialTaxableBase = committedTaxData.capitalSection === "112A" ? Math.max(0, specialIncome - 125000) : specialIncome;
-  const detailedSpecialRateTax = specialCapital111A * .20 + Math.max(0, specialCapital112A - 125000) * .125 + specialCapital112 * .125;
+  const specialAdjustment111A = Math.min(specialCapital111A, specialBasicExemptionAdjustment);
+  const remainingSpecialAdjustmentAfter111A = Math.max(0, specialBasicExemptionAdjustment - specialAdjustment111A);
+  const specialAdjustment112A = Math.min(specialCapital112A, remainingSpecialAdjustmentAfter111A);
+  const specialAdjustment112 = Math.min(specialCapital112, Math.max(0, remainingSpecialAdjustmentAfter111A - specialAdjustment112A));
+  const fallbackSpecialTaxableBase = committedTaxData.capitalSection === "112A" ? Math.max(0, specialIncome - specialBasicExemptionAdjustment - 125000) : Math.max(0, specialIncome - specialBasicExemptionAdjustment);
+  const detailedSpecialRateTax = Math.max(0, specialCapital111A - specialAdjustment111A) * .20 + Math.max(0, specialCapital112A - specialAdjustment112A - 125000) * .125 + Math.max(0, specialCapital112 - specialAdjustment112) * .125;
   const specialRateTax = detailedSpecialIncome > 0 ? detailedSpecialRateTax : fallbackSpecialTaxableBase * fallbackSpecialRate;
   const grossTaxLiability = tax + specialRateTax;
   const surchargeRate = taxable > 50000000 ? (regime === "old" ? .37 : .25) : taxable > 20000000 ? .25 : taxable > 10000000 ? .15 : taxable > 5000000 ? .10 : 0;
@@ -171,7 +202,7 @@ export default function Home() {
   const cess = (grossTaxLiability + surcharge) * .04;
   const taxBeforeInterest = grossTaxLiability + surcharge + cess;
   const assessedTax = Math.max(0, taxBeforeInterest - committedTaxData.tds - committedTaxData.tcs);
-  const normalTaxAt = (income: number) => regime === "new" ? slabTax(income) : Math.max(0, income > 1000000 ? 112500 + (income - 1000000) * .3 : income > 500000 ? 12500 + (income - 500000) * .2 : Math.max(0, income - 250000) * .05);
+  const normalTaxAt = (income: number) => normalTaxFor(regime, income, basicExemption);
   const normalCapitalGain = committedValues.capital !== 0 ? Math.max(0, specialCapitalBySection("stcgOther")) : 0;
   const lastQuarterNormalIncome = Math.min(normalIncome, Math.max(0, dividendIncome) + normalCapitalGain);
   const lastQuarterNormalTax = Math.max(0, grossNormalTax - normalTaxAt(Math.max(0, normalIncome - lastQuarterNormalIncome)));
@@ -235,12 +266,12 @@ export default function Home() {
     add(totalTaxLiability > 0, "taxCalculation");
     setSavedHeads(current => current.length === autoSavedHeads.length && current.every((head, index) => head === autoSavedHeads[index]) ? current : autoSavedHeads);
   }, [values, houseEntries, propertyType, capitalEntries, capitalSection, presumptiveEntries, presumptiveSection, otherDescription, draftChapterVIA, otherDeductions, tds, tcs, advanceTax, selfAssessmentTax, interest234A, interest234B, interest234C, fee234F, totalTaxLiability]);
-  const slabBreakdown = (regime === "new" ? [[0,400000,0],[400000,800000,.05],[800000,1200000,.10],[1200000,1600000,.15],[1600000,2000000,.20],[2000000,2400000,.25],[2400000,Infinity,.30]] : [[0,250000,0],[250000,500000,.05],[500000,1000000,.20],[1000000,Infinity,.30]]).map(([from,to,rate]) => { const taxableAmount = Math.max(0, Math.min(normalIncome,to) - from); return { from, to, rate, taxableAmount, amount: taxableAmount * rate }; }).filter(row => row.taxableAmount > 0 || (row.rate === 0 && normalIncome > 0));
+  const slabBreakdown = (regime === "new" ? [[0,400000,0],[400000,800000,.05],[800000,1200000,.10],[1200000,1600000,.15],[1600000,2000000,.20],[2000000,2400000,.25],[2400000,Infinity,.30]] : [[0,basicExemption,0],[basicExemption,500000,.05],[500000,1000000,.20],[1000000,Infinity,.30]]).map(([from,to,rate]) => { const taxableAmount = Math.max(0, Math.min(normalIncome,to) - from); return { from, to, rate, taxableAmount, amount: taxableAmount * rate }; }).filter(row => row.taxableAmount > 0 || (row.rate === 0 && normalIncome > 0));
   const specialTaxWorking = detailedSpecialIncome > 0 ? [
-    ...(specialCapital111A > 0 ? [{ label: "Short-Term Capital Gain u/s 111A", income: specialCapital111A, exemption: 0, rate: .20, tax: specialCapital111A * .20 }] : []),
-    ...(specialCapital112A > 0 ? [{ label: "Long-Term Capital Gain u/s 112A", income: specialCapital112A, exemption: Math.min(125000, specialCapital112A), rate: .125, tax: Math.max(0, specialCapital112A - 125000) * .125 }] : []),
-    ...(specialCapital112 > 0 ? [{ label: "Long-Term Capital Gain u/s 112", income: specialCapital112, exemption: 0, rate: .125, tax: specialCapital112 * .125 }] : []),
-  ] : specialIncome > 0 ? [{ label: committedTaxData.capitalSection === "111A" ? "Short-Term Capital Gain u/s 111A" : committedTaxData.capitalSection === "112A" ? "Long-Term Capital Gain u/s 112A" : "Long-Term Capital Gain u/s 112", income: specialIncome, exemption: committedTaxData.capitalSection === "112A" ? Math.min(125000, specialIncome) : 0, rate: fallbackSpecialRate, tax: specialRateTax }] : [];
+    ...(specialCapital111A > 0 ? [{ label: "Short-Term Capital Gain u/s 111A", income: specialCapital111A, exemption: specialAdjustment111A, threshold: 0, rate: .20, tax: Math.max(0, specialCapital111A - specialAdjustment111A) * .20 }] : []),
+    ...(specialCapital112A > 0 ? [{ label: "Long-Term Capital Gain u/s 112A", income: specialCapital112A, exemption: specialAdjustment112A, threshold: Math.min(125000, Math.max(0, specialCapital112A - specialAdjustment112A)), rate: .125, tax: Math.max(0, specialCapital112A - specialAdjustment112A - 125000) * .125 }] : []),
+    ...(specialCapital112 > 0 ? [{ label: "Long-Term Capital Gain u/s 112", income: specialCapital112, exemption: specialAdjustment112, threshold: 0, rate: .125, tax: Math.max(0, specialCapital112 - specialAdjustment112) * .125 }] : []),
+  ] : specialIncome > 0 ? [{ label: committedTaxData.capitalSection === "111A" ? "Short-Term Capital Gain u/s 111A" : committedTaxData.capitalSection === "112A" ? "Long-Term Capital Gain u/s 112A" : "Long-Term Capital Gain u/s 112", income: specialIncome, exemption: specialBasicExemptionAdjustment, threshold: committedTaxData.capitalSection === "112A" ? Math.min(125000, Math.max(0, specialIncome - specialBasicExemptionAdjustment)) : 0, rate: fallbackSpecialRate, tax: specialRateTax }] : [];
   const interest234ABase = Math.floor(Math.max(0, assessedTax - committedTaxData.advanceTax - committedTaxData.selfAssessmentTax) / 100) * 100;
   const interest234BBase = committedTaxData.advanceTax < assessedTax * .90 ? interest234BShortfall : 0;
   const interest234CWorking = [
@@ -422,7 +453,7 @@ export default function Home() {
             <section className="working-card"><div className="working-card-head"><div><strong>Interest u/s 234C</strong><small>Deferment of advance-tax instalments</small></div><b>{money.format(suggested234C)}</b></div><div className="working-assumption"><strong>Last-quarter income assumption</strong><span>Capital gains and dividend income are assumed to arise in the final quarter. Attributable tax of {money.format(lastQuarterIncomeTax)} is included only in the March target.</span></div><div className="working-grid interest-c-grid working-grid-head"><span>Instalment</span><span>Required / Paid</span><span>Shortfall</span><span>Interest</span></div>{interest234CWorking.map((row, index) => <div className="working-grid interest-c-grid" key={`entry-interest-234c-${index}`}><span>{row.label}<small>{row.percent}% cumulative target; {row.months} month(s) at 1% p.m.</small></span><span>{money.format(row.required)} / {money.format(row.paid)}</span><b>{money.format(row.shortfall)}</b><b>{money.format(row.interest)}</b></div>)}<div className="working-total"><span>Total Interest u/s 234C</span><b>{money.format(suggested234C)}</b></div></section>
             <section className="working-card"><div className="working-card-head"><div><strong>Fee u/s 234F</strong><small>Fee for delay in furnishing return</small></div><b>{money.format(suggested234F)}</b></div><div className="formula-line"><span>{delayedMonths ? `Return filed after the due date; fee based on total income of ${money.format(taxable)}` : "Return filed within the due date - no fee applicable"}</span><b>{money.format(suggested234F)}</b></div></section>
           </div><h3>Final Amounts</h3><div className="form-grid"><Field label="Interest u/s 234A" value={interest234A} onChange={setInterest234A} /><Field label="Interest u/s 234B" value={interest234B} onChange={setInterest234B} /><Field label="Interest u/s 234C" value={interest234C} onChange={setInterest234C} /><Field label="Fee u/s 234F" value={fee234F} onChange={setFee234F} /></div></div>}
-          {active === "taxCalculation" && <div className="tax-detail-panel"><div className="tax-subhead"><span>Normal Income — Slab-Wise Calculation</span><b>{money.format(normalIncome)}</b></div>{slabBreakdown.map((row, index) => <div key={index}><span>{row.to === Infinity ? `Above ${money.format(row.from)}` : `${money.format(row.from)} – ${money.format(row.to)}`} @ {(row.rate * 100).toFixed(0)}%</span><b>{money.format(row.amount)}</b></div>)}<div><span>Tax on Normal Income</span><b>{money.format(grossNormalTax)}</b></div>{specialIncome > 0 && <><div className="tax-subhead"><span>Special Income — {capitalSection === "111A" ? "Section 111A" : capitalSection === "112A" ? "Section 112A" : "Section 112"}</span><b>{money.format(specialIncome)}</b></div><div><span>Taxable Amount @ {(specialRate * 100).toFixed(1)}%</span><b>{money.format(specialRateTax)}</b></div></>}{rebate87A > 0 && <div className="less"><span>Less: Rebate u/s 87A</span><b>− {money.format(rebate87A)}</b></div>}<div><span>Gross Tax Liability</span><b>{money.format(grossTaxLiability)}</b></div>{surcharge > 0 && <div><span>Surcharge</span><b>{money.format(surcharge)}</b></div>}<div><span>Health &amp; Education Cess</span><b>{money.format(cess)}</b></div><div className="total"><span>Total Tax Liability</span><b>{money.format(totalTaxLiability)}</b></div></div>}
+          {active === "taxCalculation" && <div className="tax-detail-panel"><div className="tax-subhead"><span>Normal Income — Slab-Wise Calculation</span><b>{money.format(normalIncome)}</b></div>{slabBreakdown.map((row, index) => <div key={index}><span>{row.to === Infinity ? `Above ${money.format(row.from)}` : `${money.format(row.from)} – ${money.format(row.to)}`} @ {(row.rate * 100).toFixed(0)}%</span><b>{money.format(row.amount)}</b></div>)}<div><span>Tax on Normal Income</span><b>{money.format(grossNormalTax)}</b></div>{specialIncome > 0 && <><div className="tax-subhead"><span>Special Income — {capitalSection === "111A" ? "Section 111A" : capitalSection === "112A" ? "Section 112A" : "Section 112"}</span><b>{money.format(specialIncome)}</b></div>{specialBasicExemptionAdjustment > 0 && <div className="less"><span>Less: Basic exemption limit shortfall adjusted against special income</span><b>− {money.format(specialBasicExemptionAdjustment)}</b></div>}<div><span>Tax on Special Income</span><b>{money.format(specialRateTax)}</b></div></>}{rebate87A > 0 && <div className="less"><span>Less: Rebate u/s 87A</span><b>− {money.format(rebate87A)}</b></div>}<div><span>Gross Tax Liability</span><b>{money.format(grossTaxLiability)}</b></div>{surcharge > 0 && <div><span>Surcharge</span><b>{money.format(surcharge)}</b></div>}<div><span>Health &amp; Education Cess</span><b>{money.format(cess)}</b></div><div className="total"><span>Total Tax Liability</span><b>{money.format(totalTaxLiability)}</b></div></div>}
           <div className="entry-total"><span>{active === "taxCalculation" ? "Total Tax Liability" : "Total Entered"}</span><strong>{money.format(active === "deductions" ? draftChapterVIA : active === "tdsTcs" ? tds + tcs : active === "advanceTax" ? advanceTax : active === "selfAssessment" ? selfAssessmentTax : active === "interestFee" ? draftTotalInterest + fee234F : totalTaxLiability)}</strong></div><div className="entry-footer utility-save-footer"><span>{active === "taxCalculation" ? "Review the detailed calculation before opening the computation." : "This section is saved automatically."}</span>{active === "taxCalculation" ? <div className="tax-calculation-actions">{netBalance > 0 && <a className="pay-tax-button" href="https://www.incometax.gov.in/iec/foportal/" target="_blank" rel="noreferrer">Pay Tax <span>↗</span></a>}<button className="button primary" onClick={() => { setShowReview(true); setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50); }}>View Computation <span>→</span></button></div> : <button className="button primary" onClick={goNextHead}>Next <span>→</span></button>}</div>
         </section>}
 
@@ -503,7 +534,7 @@ export default function Home() {
 
           <section className="working-card">
             <div className="working-card-head"><div><strong>Tax on Special Income</strong><small>Income-wise special-rate working</small></div><b>{money.format(specialRateTax)}</b></div>
-            {specialTaxWorking.length > 0 ? <><div className="working-grid special-working-grid working-grid-head"><span>Nature of Income</span><span>Taxable Base</span><span>Rate</span><span>Tax</span></div>{specialTaxWorking.map((row, index) => <div className="working-grid special-working-grid" key={`special-working-${index}`}><span>{row.label}{row.exemption > 0 && <small>Income {money.format(row.income)} less threshold {money.format(row.exemption)}</small>}</span><b>{money.format(Math.max(0, row.income - row.exemption))}</b><span>{row.rate * 100}%</span><b>{money.format(row.tax)}</b></div>)}<div className="working-total"><span>Tax on Special Income</span><b>{money.format(specialRateTax)}</b></div></> : <div className="working-empty">No income chargeable at a special rate.</div>}
+            {specialTaxWorking.length > 0 ? <><div className="working-grid special-working-grid working-grid-head"><span>Nature of Income</span><span>Taxable Base</span><span>Rate</span><span>Tax</span></div>{specialTaxWorking.map((row, index) => { const taxableBase = Math.max(0, row.income - row.exemption - row.threshold); return <div className="working-grid special-working-grid" key={`special-working-${index}`}><span>{row.label}{row.exemption > 0 && <small>Income {money.format(row.income)} less basic exemption adjustment {money.format(row.exemption)}</small>}{row.threshold > 0 && <small>Less threshold under section 112A {money.format(row.threshold)}</small>}</span><b>{money.format(taxableBase)}</b><span>{row.rate * 100}%</span><b>{money.format(row.tax)}</b></div>})}<div className="working-total"><span>Tax on Special Income</span><b>{money.format(specialRateTax)}</b></div></> : <div className="working-empty">No income chargeable at a special rate.</div>}
           </section>
 
           {suggested234A > 0 && <section className="working-card interest-working-card">
