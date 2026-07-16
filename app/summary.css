@@ -95,6 +95,24 @@
 .income-head-group .source-main { margin-left:-22px;margin-right:-22px;padding-left:24px;padding-right:24px; }
 .income-head-group .source-main { min-height:34px;font-size:13px; }
 .income-head-group .source-main span,.income-head-group .source-main b { font-size:13px;line-height:1.2; }
+.capital-preview { padding:4px 0 5px 42px;border-bottom:1px dashed #e6eeea;color:var(--muted); }
+.capital-preview div { min-height:24px;display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;font-size:12px;line-height:1.25; }
+.capital-preview b { padding-right:132px;color:var(--ink);font-size:12px;font-weight:400;text-align:right; }
+.capital-preview-total b {
+  display:inline-block;
+  width:max-content;
+  min-width:88px;
+  padding-top:2px;
+  padding-bottom:2px;
+  justify-self:end;
+  border-top:1px solid #8fa19b;
+  border-bottom:1px solid #8fa19b;
+  color:var(--ink);
+  font-size:12px!important;
+  font-weight:700!important;
+  text-align:right;
+}
+.capital-preview-total span { color:var(--ink);font-weight:700!important; }
 @media print { .income-head-group .source-main { margin-left:0;margin-right:0;padding-left:0;padding-right:0; } }
 
 /* Distinct row presentation for normal-rate and special-rate income. */
@@ -111,6 +129,18 @@
   .income-head-group .source-main { min-height:25pt; }
   .income-head-group .source-main span,.income-head-group .source-main b { font-size:9.5pt;line-height:1.2; }
   .income-head-group .source-subrow b { transform:translateX(-82pt); }
+  .capital-preview { padding:3pt 0 4pt 22pt!important;border-color:#dfe7e4!important; }
+  .capital-preview div { min-height:17pt!important;grid-template-columns:minmax(0,1fr) 150pt!important;font-size:8.8pt!important;line-height:1.2!important; }
+  .capital-preview b { padding-right:68pt!important;font-size:8.8pt!important; }
+  .capital-preview-total b {
+    width:max-content!important;
+    min-width:50pt!important;
+    padding-top:1.5pt!important;
+    padding-bottom:1.5pt!important;
+    border-top:.6pt solid #8fa19b!important;
+    border-bottom:.6pt solid #8fa19b!important;
+    font-size:8.8pt!important;
+  }
   .computation-section-title { background:#dfeae6!important;color:#102e29!important;border-color:#8fa8a0!important;print-color-adjust:exact;-webkit-print-color-adjust:exact; }
   .computation-section-title span { background:#0f5b4c!important;color:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact; }
   .income-classification { margin-top:11pt!important;margin-bottom:13pt!important;padding:5pt 8pt!important;background:#e3eee9!important;border-top:1.5pt solid #809b92;border-bottom:1.5pt solid #809b92;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact; }
@@ -605,5 +635,84 @@
   .income-summary-table.statement-table .income-summary-row.heading span {
     font-size:9.5pt!important;
     line-height:1.25!important;
+  }
+}
+
+/* Capital gain calculated amount: line only around inner amount, matching subhead typography. */
+.income-summary .capital-preview-total span,
+.income-summary .capital-preview-total b {
+  font-size:13.5px!important;
+  line-height:1.28!important;
+}
+
+.income-summary .capital-preview b {
+  display:block!important;
+  justify-self:end!important;
+  width:132px!important;
+  min-width:132px!important;
+  max-width:132px!important;
+  margin-right:132px!important;
+  padding-right:0!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+  font-weight:400!important;
+}
+
+.income-summary .capital-preview-total b {
+  padding:0!important;
+  border:0!important;
+  font-family:inherit!important;
+}
+
+.income-summary .capital-total-amount {
+  display:inline-block!important;
+  padding:1px 0!important;
+  border-top:1px solid #c2cfcb!important;
+  border-bottom:1px solid #c2cfcb!important;
+  color:#15332e!important;
+  font-weight:500!important;
+  text-align:right!important;
+}
+
+.income-summary .capital-preview-total span {
+  color:#15332e!important;
+  font-weight:500!important;
+}
+
+@media print {
+  .income-summary .capital-preview-total span,
+  .income-summary .capital-preview-total b {
+    font-size:10pt!important;
+    line-height:1.22!important;
+  }
+
+  .income-summary .capital-preview b {
+    width:78pt!important;
+    min-width:78pt!important;
+    max-width:78pt!important;
+    margin-right:68pt!important;
+    padding-right:0!important;
+    text-align:right!important;
+    white-space:nowrap!important;
+    font-weight:400!important;
+  }
+
+  .income-summary .capital-preview-total b {
+    padding:0!important;
+    border:0!important;
+  }
+
+  .income-summary .capital-total-amount {
+    padding:1pt 0!important;
+    border-top:.5pt solid #c2cfcb!important;
+    border-bottom:.5pt solid #c2cfcb!important;
+    color:#15332e!important;
+    font-weight:500!important;
+    text-align:right!important;
+  }
+
+  .income-summary .capital-preview-total span {
+    color:#15332e!important;
+    font-weight:500!important;
   }
 }
