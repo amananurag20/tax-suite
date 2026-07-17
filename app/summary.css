@@ -716,3 +716,105 @@
     font-weight:500!important;
   }
 }
+
+/* Final alignment pass: one fixed inner amount lane for all sub-head workings,
+   shared by screen and PDF so the rupee amounts and short calculation lines line up. */
+.income-summary-table.statement-table .income-head-group .source-subrow b {
+  justify-self:end!important;
+  width:150px!important;
+  min-width:150px!important;
+  max-width:150px!important;
+  margin-right:92px!important;
+  padding-right:0!important;
+  transform:none!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+
+.income-summary .capital-preview div {
+  grid-template-columns:minmax(0,1fr) 242px!important;
+}
+
+.income-summary .capital-preview b {
+  justify-self:end!important;
+  width:150px!important;
+  min-width:150px!important;
+  max-width:150px!important;
+  margin-right:92px!important;
+  padding-right:0!important;
+  transform:none!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+
+.income-summary .capital-total-amount {
+  display:block!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  text-align:right!important;
+}
+
+.income-summary .capital-subtotal {
+  min-height:32px!important;
+}
+
+.income-summary .capital-subtotal>span {
+  padding-left:28px!important;
+  color:#667773!important;
+}
+
+.income-summary .capital-preview {
+  padding-left:56px!important;
+}
+
+@media print {
+  .income-summary-table.statement-table .income-head-group .source-subrow b {
+    width:74pt!important;
+    min-width:74pt!important;
+    max-width:74pt!important;
+    margin-right:88pt!important;
+    padding-right:0!important;
+    transform:none!important;
+    text-align:right!important;
+    white-space:nowrap!important;
+    box-sizing:border-box!important;
+  }
+
+  .income-summary .capital-preview div {
+    grid-template-columns:minmax(0,1fr) 162pt!important;
+  }
+
+  .income-summary .capital-preview b {
+    width:74pt!important;
+    min-width:74pt!important;
+    max-width:74pt!important;
+    margin-right:88pt!important;
+    padding-right:0!important;
+    transform:none!important;
+    text-align:right!important;
+    white-space:nowrap!important;
+    box-sizing:border-box!important;
+  }
+
+  .income-summary .capital-total-amount {
+    display:block!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+    text-align:right!important;
+  }
+
+  .income-summary .capital-subtotal {
+    min-height:21pt!important;
+  }
+
+  .income-summary .capital-subtotal>span {
+    padding-left:14pt!important;
+    color:#667773!important;
+  }
+
+  .income-summary .capital-preview {
+    padding-left:28pt!important;
+  }
+}
