@@ -71,6 +71,15 @@ function normalTaxFor(regime: "new" | "old", income: number, basicExemption: num
   return fivePercentBand + twentyPercentBand + thirtyPercentBand;
 }
 
+function rebate87AFor(regime: "new" | "old", normalIncome: number, normalTax: number) {
+  if (regime === "new") {
+    if (normalIncome <= 1200000) return Math.min(normalTax, 60000);
+    const marginalRelief = normalTax - Math.max(0, normalIncome - 1200000);
+    return Math.max(0, Math.min(normalTax, marginalRelief));
+  }
+  return normalIncome <= 500000 ? Math.min(normalTax, 12500) : 0;
+}
+
 export default function Home() {
   const [itr, setItr] = useState("ITR-1");
   const [regime, setRegime] = useState<"new" | "old">("new");
@@ -162,11 +171,17 @@ export default function Home() {
   useEffect(() => { setAdvanceTax(advanceQ1 + advanceQ2 + advanceQ3 + advanceQ4); }, [advanceQ1, advanceQ2, advanceQ3, advanceQ4]);
   useEffect(() => { setTds(tdsSalary + tdsOther); }, [tdsSalary, tdsOther]);
   useEffect(() => { if (!personal.name && !personal.pan && Object.values(values).every(value => value === 0)) { setDepositInterest(0); setTdsSalary(0); setTdsOther(0); } }, [personal.name, personal.pan, values]);
-  const total = Object.values(committedValues).reduce((a, b) => a + b, 0);
+  const taxpayerAge = ageOn(personal.dob);
+  const houseIncomeForComputation = regime === "new" ? Math.max(0, committedValues.house) : Math.max(committedValues.house, -200000);
+  const total = committedValues.salary + houseIncomeForComputation + committedValues.capital + committedValues.business + committedValues.presumptive + committedValues.other;
   const standardDeduction = committedValues.salary ? (regime === "new" ? 75000 : 50000) : 0;
   const draftStandardDeduction = values.salary ? (regime === "new" ? 75000 : 50000) : 0;
   const otherDeductionTotal = otherDeductions.reduce((sum, entry) => sum + entry.amount, 0) + otherDeductionAmount;
-  const draftChapterVIA = npsEmployer + agniveer + (regime === "old" ? deductions + otherDeductionTotal : 0);
+  const capped80C = Math.min(deduction80C, 150000);
+  const capped80D = Math.min(deduction80D, 100000);
+  const cappedInterestDeduction = Math.min(deductionInterest, taxpayerAge >= 60 ? 50000 : 10000);
+  const cappedOldRegimeDeductions = capped80C + capped80D + cappedInterestDeduction + otherDeductionTotal;
+  const draftChapterVIA = npsEmployer + agniveer + (regime === "old" ? cappedOldRegimeDeductions : 0);
   const chapterVIA = committedTaxData.chapterVIA;
   useEffect(() => { setCommittedValues(values); }, [values]);
   useEffect(() => { setCommittedTaxData({ chapterVIA: draftChapterVIA, tds, tcs, advanceTax, selfAssessmentTax, interest234A, interest234B, interest234C, fee234F, capitalSection }); }, [draftChapterVIA, tds, tcs, advanceTax, selfAssessmentTax, interest234A, interest234B, interest234C, fee234F, capitalSection]);
@@ -185,7 +200,7 @@ export default function Home() {
   const basicExemption = basicExemptionLimit(regime, personal.dob);
   const specialBasicExemptionAdjustment = Math.min(specialIncome, Math.max(0, basicExemption - normalIncome));
   const grossNormalTax = useMemo(() => normalTaxFor(regime, normalIncome, basicExemption), [regime, normalIncome, basicExemption]);
-  const rebate87A = regime === "new" && taxable <= 1200000 ? Math.min(grossNormalTax, 60000) : regime === "old" && taxable <= 500000 ? Math.min(grossNormalTax, 12500) : 0;
+  const rebate87A = rebate87AFor(regime, normalIncome, grossNormalTax);
   const tax = Math.max(0, grossNormalTax - rebate87A);
   const fallbackSpecialRate = committedTaxData.capitalSection === "111A" ? .20 : committedTaxData.capitalSection === "112A" || committedTaxData.capitalSection === "112" ? .125 : 0;
   const specialRate = fallbackSpecialRate;
@@ -215,14 +230,17 @@ export default function Home() {
   const filing = filingDate ? new Date(`${filingDate}T00:00:00`) : new Date("2026-07-12T00:00:00");
   const dueDate = new Date("2026-07-31T00:00:00");
   const delayedMonths = filing > dueDate ? Math.max(1, Math.ceil((filing.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24 * 30))) : 0;
+  const hasBusinessOrProfessionIncome = committedValues.business + committedValues.presumptive > 0;
+  const advanceTaxApplicable = assessedTax >= 10000 && !(taxpayerAge >= 60 && !hasBusinessOrProfessionIncome);
   const suggested234A = Math.round(Math.floor(Math.max(0, assessedTax - committedTaxData.advanceTax - committedTaxData.selfAssessmentTax) / 100) * 100 * .01 * delayedMonths);
   const monthsFromApril = Math.max(1, (filing.getFullYear() - 2026) * 12 + filing.getMonth() - 3 + 1);
   const interest234BShortfall = Math.floor(Math.max(0, assessedTax - committedTaxData.advanceTax) / 100) * 100;
-  const suggested234B = committedTaxData.advanceTax < assessedTax * .90 ? Math.round(interest234BShortfall * .01 * monthsFromApril) : 0;
-  const interest234CTargets = [regularAssessedTax * .15, regularAssessedTax * .45, regularAssessedTax * .75, assessedTax];
+  const suggested234B = advanceTaxApplicable && committedTaxData.advanceTax < assessedTax * .90 ? Math.round(interest234BShortfall * .01 * monthsFromApril) : 0;
+  const presumptiveAdvanceTaxSingleInstalment = committedValues.presumptive > 0 && committedValues.business === 0;
+  const interest234CTargets = presumptiveAdvanceTaxSingleInstalment ? [0, 0, 0, assessedTax] : [regularAssessedTax * .15, regularAssessedTax * .45, regularAssessedTax * .75, assessedTax];
   const interest234CPaid = [advanceQ1, advanceQ1 + advanceQ2, advanceQ1 + advanceQ2 + advanceQ3, advanceTax];
   const interest234CMonths = [3, 3, 3, 1];
-  const suggested234C = Math.round(interest234CTargets.reduce((sum, target, index) => sum + Math.floor(Math.max(0, target - interest234CPaid[index]) / 100) * 100 * .01 * interest234CMonths[index], 0));
+  const suggested234C = advanceTaxApplicable ? Math.round(interest234CTargets.reduce((sum, target, index) => sum + Math.floor(Math.max(0, target - interest234CPaid[index]) / 100) * 100 * .01 * interest234CMonths[index], 0)) : 0;
   const suggested234F = filing > dueDate ? (taxable <= 500000 ? 1000 : 5000) : 0;
   useEffect(() => {
     setInterest234A(suggested234A);
@@ -291,13 +309,13 @@ export default function Home() {
     ...(specialCapital112 > 0 ? [{ label: "Long-Term Capital Gain u/s 112", income: specialCapital112, exemption: specialAdjustment112, threshold: 0, rate: .125, tax: Math.max(0, specialCapital112 - specialAdjustment112) * .125 }] : []),
   ] : specialIncome > 0 ? [{ label: committedTaxData.capitalSection === "111A" ? "Short-Term Capital Gain u/s 111A" : committedTaxData.capitalSection === "112A" ? "Long-Term Capital Gain u/s 112A" : "Long-Term Capital Gain u/s 112", income: specialIncome, exemption: fallbackSpecialBeneficialAdjustment, threshold: committedTaxData.capitalSection === "112A" ? Math.min(125000, Math.max(0, specialIncome - fallbackSpecialBeneficialAdjustment)) : 0, rate: fallbackSpecialRate, tax: specialRateTax }] : [];
   const interest234ABase = Math.floor(Math.max(0, assessedTax - committedTaxData.advanceTax - committedTaxData.selfAssessmentTax) / 100) * 100;
-  const interest234BBase = committedTaxData.advanceTax < assessedTax * .90 ? interest234BShortfall : 0;
+  const interest234BBase = advanceTaxApplicable && committedTaxData.advanceTax < assessedTax * .90 ? interest234BShortfall : 0;
   const interest234CWorking = [
     { label: "Up to 15 June 2025", percent: 15, required: regularAssessedTax * .15, paid: advanceQ1, months: 3 },
     { label: "Up to 15 September 2025", percent: 45, required: regularAssessedTax * .45, paid: advanceQ1 + advanceQ2, months: 3 },
     { label: "Up to 15 December 2025", percent: 75, required: regularAssessedTax * .75, paid: advanceQ1 + advanceQ2 + advanceQ3, months: 3 },
     { label: "Up to 15 March 2026", percent: 100, required: assessedTax, paid: advanceTax, months: 1 },
-  ].map(row => { const shortfall = Math.floor(Math.max(0, row.required - row.paid) / 100) * 100; return { ...row, shortfall, interest: Math.round(shortfall * .01 * row.months) }; });
+  ].map(row => { const shortfall = advanceTaxApplicable ? Math.floor(Math.max(0, row.required - row.paid) / 100) * 100 : 0; return { ...row, required: advanceTaxApplicable ? row.required : 0, shortfall, interest: Math.round(shortfall * .01 * row.months) }; });
   const current = incomeHeads.find((h) => h.key === active);
   const setValue = (key: IncomeKey, n: number) => setValues((v) => ({ ...v, [key]: n }));
   const capitalRowsForSection = (section: string, label: string, total: number) => {
@@ -530,7 +548,7 @@ export default function Home() {
           <div className="income-summary-row heading"><span>Particulars</span><span>Amount</span></div>
           <div className="computation-section-title"><span>01</span> Income Details</div>
           {salaryIncome > 0 && <div className="income-head-group"><div className="computation-row source-main"><span>Salary &amp; Pension</span><b>{money.format(salaryIncome)}</b></div><div className="computation-row source-subrow"><span>Gross Salary &amp; Pension</span><b>{money.format(committedValues.salary)}</b></div><div className="computation-row source-subrow less"><span>Less: Standard Deduction</span><b>− {money.format(standardDeduction)}</b></div></div>}
-          {committedValues.house !== 0 && <div className="income-head-group"><div className="computation-row source-main"><span>House Property</span><b>{money.format(committedValues.house)}</b></div>{summaryHouseEntries.map((entry, index) => <div className="computation-row source-subrow" key={`summary-house-${index}`}><span>Property {index + 1} — {entry.type === "self" ? "Interest on House Loan (Self Occupied)" : entry.type === "let" ? "Income from Let Out Property" : "Income from Deemed Let Out Property"}</span><b>{money.format(entry.netRent)}</b></div>)}</div>}
+          {committedValues.house !== 0 && <div className="income-head-group"><div className="computation-row source-main"><span>House Property</span><b>{money.format(houseIncomeForComputation)}</b></div>{summaryHouseEntries.map((entry, index) => <div className="computation-row source-subrow" key={`summary-house-${index}`}><span>Property {index + 1} — {entry.type === "self" ? "Interest on House Loan (Self Occupied)" : entry.type === "let" ? "Income from Let Out Property" : "Income from Deemed Let Out Property"}</span><b>{money.format(entry.netRent)}</b></div>)}{committedValues.house !== houseIncomeForComputation && <div className="computation-row source-subrow less"><span>{regime === "new" ? "House property loss not set off under section 115BAC" : "House property loss restricted for set-off"}</span><b>{money.format(houseIncomeForComputation - committedValues.house)}</b></div>}</div>}
           {committedValues.business + committedValues.presumptive !== 0 && <div className="income-head-group"><div className="computation-row source-main"><span>Profits and Gains from Business or Profession</span><b>{money.format(committedValues.business + committedValues.presumptive)}</b></div>{committedValues.business !== 0 && <div className="computation-row source-subrow"><span>Business Income under Regular Provisions</span><b>{money.format(committedValues.business)}</b></div>}{presumptive44AD !== 0 && <><div className="computation-row source-subrow"><span>Turnover u/s 44AD</span><b>{money.format(turnover44AD)}</b></div><div className="computation-row source-subrow"><span>Presumptive Business Income u/s 44AD</span><b>{money.format(presumptive44AD)}</b></div></>}{presumptive44ADA !== 0 && <><div className="computation-row source-subrow"><span>Gross Receipts u/s 44ADA</span><b>{money.format(receipts44ADA)}</b></div><div className="computation-row source-subrow"><span>Presumptive Professional Income u/s 44ADA</span><b>{money.format(presumptive44ADA)}</b></div></>}{presumptive44AE !== 0 && <div className="computation-row source-subrow"><span>Presumptive Income from Goods Carriages u/s 44AE</span><b>{money.format(presumptive44AE)}</b></div>}{presumptiveBoth !== 0 && <><div className="computation-row source-subrow"><span>Turnover u/s 44AD</span><b>{money.format(turnoverBoth)}</b></div><div className="computation-row source-subrow"><span>Gross Receipts u/s 44ADA</span><b>{money.format(receiptsBoth)}</b></div><div className="computation-row source-subrow"><span>Presumptive Income u/s 44AD and 44ADA</span><b>{money.format(presumptiveBoth)}</b></div></>}{committedValues.presumptive !== 0 && presumptive44AD === 0 && presumptive44ADA === 0 && presumptive44AE === 0 && presumptiveBoth === 0 && <div className="computation-row source-subrow"><span>Presumptive Income</span><b>{money.format(committedValues.presumptive)}</b></div>}</div>}
           {committedValues.capital !== 0 && <div className="income-head-group"><div className="computation-row source-main"><span>Capital Gains</span><b>{money.format(committedValues.capital)}</b></div>{capitalRowsForSection("111A", `Short-Term Capital ${stcg111A < 0 ? "Loss" : "Gain"} u/s 111A`, stcg111A)}{capitalRowsForSection("stcgOther", `Short-Term Capital ${stcgOther < 0 ? "Loss" : "Gain"} Other Than u/s 111A`, stcgOther)}{capitalRowsForSection("112A", `Long-Term Capital ${ltcg112A < 0 ? "Loss" : "Gain"} u/s 112A`, ltcg112A)}{capitalRowsForSection("112", `Long-Term Capital ${ltcg112 < 0 ? "Loss" : "Gain"} u/s 112`, ltcg112)}{stcg111A === 0 && stcgOther === 0 && ltcg112A === 0 && ltcg112 === 0 && <div className="computation-row source-subrow"><span>{shortTermCapitalGain !== 0 ? `Short-Term Capital ${shortTermCapitalGain < 0 ? "Loss" : "Gain"}` : `Long-Term Capital ${longTermCapitalGain < 0 ? "Loss" : "Gain"}`}</span><b>{money.format(shortTermCapitalGain || longTermCapitalGain)}</b></div>}</div>}
           {committedValues.other > 0 && <div className="income-head-group"><div className="computation-row source-main"><span>Other Sources</span><b>{money.format(committedValues.other)}</b></div>{interestIncome > 0 && <div className="computation-row source-subrow"><span>Interest from Savings Bank</span><b>{money.format(interestIncome)}</b></div>}{depositInterest > 0 && <div className="computation-row source-subrow"><span>Interest from Deposit</span><b>{money.format(depositInterest)}</b></div>}{dividendIncome > 0 && <div className="computation-row source-subrow"><span>Dividend Income</span><b>{money.format(dividendIncome)}</b></div>}{otherIncome > 0 && <div className="computation-row source-subrow"><span>Any Other Income{otherDescription.trim() ? ` — ${otherDescription.trim()}` : ""}</span><b>{money.format(otherIncome)}</b></div>}</div>}
